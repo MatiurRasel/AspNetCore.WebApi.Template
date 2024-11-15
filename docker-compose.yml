@@ -1,0 +1,52 @@
+services:
+  
+  web-api:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: web-api
+    ports:
+      - "5000:8080"
+      - "5001:8081"
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=postgres;Database=template-db;User Id=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+    networks:
+      - api-net
+    depends_on:
+      - postgres
+  
+  postgres:
+    image: 'postgres:16.4'
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/data/postgres
+    volumes:
+      - ~/data/postgres:/data/postgres
+    networks:
+      - api-net
+      - db-net
+
+  postgres-admin:
+    image: dpage/pgadmin4
+    container_name: postgres-admin
+    ports:
+      - 8082:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    volumes:
+      - ~/data/pgadmin/:/var/lib/pgadmin/
+    networks:
+      - db-net
+    depends_on:
+      - postgres
+
+networks:
+  api-net:
+  db-net:
